@@ -1,0 +1,219 @@
+# ハンズオン
+
+## 準備
+
+### kubectlがインストールできていることを確認する
+
+```
+$ kubectl version
+```
+
+### clusterを作成する
+
+```
+# kind
+$ kind create cluster
+# minikube
+$ minikube start
+# dockerの場合UIでON
+```
+
+clusterを作成することができれば以下で確認
+
+```
+$ kubectl get componentstatuses
+```
+
+出力結果は以下のような結果が見えるはず
+
+```
+NAME                 STATUS    MESSAGE             ERROR
+scheduler            Healthy   ok
+controller-manager   Healthy   ok
+etcd-0               Healthy   {"health":"true"}
+```
+
+## kubectl編
+
+### Kubernetesのリソースを確認する
+
+ここではKubernetesのリソースを確認しながらkubectlのコマンドに慣れていきます。
+
+#### Nodeの情報を取得する
+
+```
+$ kubectl get nodes
+NAME             STATUS   ROLES    AGE   VERSION
+docker-desktop   Ready    master   35d   v1.14.8
+```
+
+アーキテクチャーで説明したように通常KubernetesはMaster NodeとWorker Nodeでわかれますが、
+この例ではdocker-desktopを利用しているためNodeは一つになります。
+
+より詳細にNodeの情報を取得するためには以下のコマンドを打ちます。
+
+```
+$ kubectl describe node docker-desktop
+```
+
+以下のような結果が得られるはずです。
+
+```
+Name:               docker-desktop
+Roles:              master
+Labels:             beta.kubernetes.io/arch=amd64
+                    beta.kubernetes.io/os=linux
+                                        kubernetes.io/arch=amd64
+                                                            kubernetes.io/hostname=docker-desktop
+                                                                                kubernetes.io/os=linux
+                                                                                                    node-role.kubernetes.io/master=
+                                                                                                    Annotations:        kubeadm.alpha.kubernetes.io/cri-socket: /var/run/dockershim.sock
+                                                                                                                        node.alpha.kubernetes.io/ttl: 0
+                                                                                                                                            volumes.kubernetes.io/controller-managed-attach-detach: true
+                                                                                                                                            CreationTimestamp:  Sun, 08 Dec 2019 22:26:45 +0900
+(以下略)
+```
+
+// T.B.D: describeの内容詳細説明する？長くなるから略しても良さそう。最初のうちはNodeのことは気にしなくて良いし。
+
+#### Kubernetes のコンポーネントを確認する
+
+```
+$ kubernetes get pod -A
+NAMESPACE     NAME                                     READY   STATUS    RESTARTS   AGE
+docker        compose-6c67d745f6-sxfmn                 1/1     Running   2          35d
+docker        compose-api-57ff65b8c7-krtb8             1/1     Running   2          35d
+kube-system   coredns-6dcc67dcbc-mx8rj                 1/1     Running   2          35d
+kube-system   coredns-6dcc67dcbc-wq4t5                 1/1     Running   2          35d
+kube-system   etcd-docker-desktop                      1/1     Running   2          35d
+kube-system   kube-apiserver-docker-desktop            1/1     Running   2          35d
+kube-system   kube-controller-manager-docker-desktop   1/1     Running   2          35d
+kube-system   kube-proxy-s46x7                         1/1     Running   2          35d
+kube-system   kube-scheduler-docker-desktop            1/1     Running   2          35d
+```
+
+各コンポーネントについてはアーキテクチャーのスライドを参照にしてください！
+最初のうちは一つ一つ正確に意味を理解できていなくても大丈夫ですよ。
+
+理解できていなくても動作させることができるという手軽さもKubernetesのとっつきやすさでもあります！
+
+### Podを操作する
+
+ここでは代表的なリソースであるPodを一例に、よく使うkubectlのコマンドを利用してみます。
+
+#### Deploymentの作成
+
+```
+# kkubectl apply -f <manifest file>
+$ kubectl apply -f https://k8s.io/examples/application/deployment.yaml
+```
+
+- `-f`でファイルを指定する
+- `kubectl create`でリソースを作成することもできますが、`Infrastructure as Code`の理念としてファイルを使用するほうが望ましいです
+- ファイルの中身は[Run a Stateless Appliction Using a Deployment](https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/)を参照
+
+#### Podをリストする
+
+```
+# kubectl get <リソース名>
+$ kubectl get pods
+```
+
+- Deploymentを作成したらからといって即座にPodができるわけではありません
+- Podができあるところをみたい場合以下のコマンドでPodが作成される様子が見えるのでみてみてください
+
+```
+$ kubectl get pods -w
+```
+
+Ctrl + cで抜けます。
+
+#### Podの詳細を表示する
+
+```
+# kubectl describe <リソース名> <オブジェクト名>
+$ kubectl describe pod nginx-deployment
+```
+
+- podの詳細を見ることができます
+- 最後の`Events`はエラーが起きたときなど確認することがよくあります
+
+#### Pod内でbashを操作する
+
+```
+# kubectl exec -it <pod-name> bash
+# pod名はkubectl get podsでリストして取得してください
+$ kubectl exec -it nginx-deployment-XXXX bash
+```
+
+- docker同様Pod内でbashを操作することが可能
+- 色々なコマンドを打ってみましょう！使いたいコマンドが入っていないことも多いです。例えばvimとか...!!!
+
+#### Podのlogを参照する
+
+```
+$ kubectl logs <pod-name>
+```
+
+(T.B.D) nginxだとログが出ないので、コマンドがあってるかどうかわかりづらい
+
+#### 外からPodにアクセスする
+
+```
+$ kubectl port-forward <pod-name> 8080:80
+```
+
+- `localhost:80`にアクセスする
+- `Welcome to nginx!`と表示されて入れば成功！
+
+#### Podの削除
+
+```
+# kubectl delete -f <file.yaml>
+$ k delete -f https://k8s.io/examples/application/deployment.yaml
+```
+
+- `kubectl get pods`で消えていく様子が伺える
+
+## アプリをデプロイし、画面におとうふくんの絵を表示させよう！
+
+ここからは自分で考えながら手を動かしてみましょう！
+わからなければ<T.B.D>に動作するyamlがあるので、まずはそれをそのまま利用しても良いです。
+
+### おとうふくん表示アプリをデプロイする
+
+以下の要件を満たすアプリをデプロイしてみましょう！！
+
+- podの数は2
+- Deploymentを使用する
+- containerPortは3000
+- image名はaoi1/tofu-sample-app T.B.D タグ名をつける
+- コンテナ名などは自由
+
+できたら以下が出来上がっているか確認しましょう!
+
+```
+$ kubectl get deployments
+# 作成したdeploymentsがREADY 2/2 となっている
+$ kubectl get pods
+# 作成したpodが2個、STATUSがREADYになっている
+```
+
+アプリが正常に動作していることは次のステップで確認します
+
+### アプリが正常に起動していることを確認する
+
+port-forwardを利用してアプリが起動していることを確認しましょう！
+
+起動して入れば画面におとうふくんの絵が表示されます
+
+- targetPortは3000番
+
+### (応用編) Serviceを利用してクラスタの外からアプリの動作を確認する
+
+<T.B.D>
+
+
+# 付録
+- この後学習を進める方法
+- namespaceについてと、kubectlを利用した作成方法、利用方法
