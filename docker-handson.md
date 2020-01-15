@@ -5,18 +5,19 @@
 - Dockerのコマンドライン操作
 
 ### docker run
+
 `$ docker run hello-world`
 
-- 他にも面白いイメージをいくつか紹介
+- 他にも面白いイメージをいくつかご紹介
   - `$ docker run lukaszlach/merry-christmas`
     - Ctl + Cで終了
   - `$ docker run docker/whalesay cowsay hello!`
     - `docker/whalesay`コンテナで、`cowsay hello!`コマンドを実行 の意
 
-### docker run -it (image) bash
+### docker run -it <image> bash
 
-- コンテナをbashで操作することができます
-- 例 : `$ docker run -it ubuntu bash`
+- コンテナでbashを実行
+- `$ docker run -it ubuntu bash`
 
 ```
 $ docker run --help
@@ -27,12 +28,6 @@ Usage:  docker run [OPTIONS] IMAGE [COMMAND] [ARG...]
   -t, --tty                            Allocate a pseudo-TTY
 ```
 
-- 意味は?
-  - ubuntuのイメージをDL、実行
-  - 標準出力を開き続ける
-  - tty(コンソール)を割り当てる
-  - bashコマンドを実行する
-
 #### やってみよう
 
 - コンテナの中で好きなプログラムをインストールしたり、ファイルを作ったりしてみましょう。
@@ -41,9 +36,8 @@ Usage:  docker run [OPTIONS] IMAGE [COMMAND] [ARG...]
 **1. コンテナ内で好きなプログラムを入れてファイルを作る**
 
 - 配布されているDockerイメージは軽量化/セキュリティ等の観点から最小限の構成にしてあり、欲しいプログラムが入っていないことが多いです。
-- 今回は`$ apt-get update`してから`$ apt-get install (package)`で欲しいパッケージを入れてみます。
-  - 以下の例はPythonですが、好きなプログラミング言語でもそれ以外でも、何でもおっけーです！
-  - 思いつく人は楽しいことしてみてください！
+- 今回はPythonをインストールし、簡単なPythonプログラムを作成します。
+- 思いつく人は他にも楽しいことしてみてください！
 
 ```
 # apt-get update
@@ -60,6 +54,7 @@ Hello
 
 - 一度`Ctl+P, Ctl+Q`でコンテナを起動したまま抜けます
   - `# exit`や`Ctl+D`で抜けるとコンテナが終了し、インストールしたものが消えてしまうので注意！
+
 ```
 $ docker container ls
 CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
@@ -77,7 +72,7 @@ my-test-container                     latest              18425e3b503a        3 
 
 **3. Docker commitしたDockerimageから新しいコンテナを起動**
 
-- さっき作ったイメージの内容を保持した新しいコンテナが出来ました！
+- さっき作ったイメージの内容を保持した新しいコンテナが出来ました
 
 ```
 $ docker run -it my-test-container bash
@@ -89,18 +84,21 @@ Hello
 ```
 
 ### docker container prune
+
 - `$ docker container ls -a` でコンテナの一覧を表示
-- Exited状態のコンテナが溜まっていると思います。
-- 以下のコマンドで停止中のコンテナを一括で削除することが可能です
+- Exited状態のコンテナが溜まっている
+- 以下のコマンドで停止中のコンテナを一括で削除することが可能
   - `$ docker container prune`
 - 実行後、再度コンテナの一覧を表示してみてください
 
-### docker run --rm (image)
+### docker run --rm <image>
+
 - `$ docker run --rm hello-world`
 - コンテナの停止と同時にコンテナを消去できるオプションです。
 - `$ docker container ls -a` で、hello-worldがないことを確認できます
 
-### docker run -d -p 80:80 (webserver image)
+### docker run -d -p 80:80 <webserver image>
+
 ```
 $ docker run --help
   -d, --detach                         Run container in background and print container ID
@@ -113,7 +111,7 @@ $ docker run --help
   - nginxの公式イメージを利用
   - バックグラウンド実行
   - コンテナの80番ポートをホストの80番ポートに転送
-    - 起動後は http://localhost:80/ でnginxに繋がります！
+    - 起動後は http://localhost:80/ でnginxに接続可能
 
 ```
 $ docker container ls
@@ -122,7 +120,8 @@ CONTAINER ID        IMAGE               COMMAND                  CREATED        
 ```
 
 ## docker stop (containerID or name)
-- バックグラウンドで起動中のコンテナを停止できます。
+
+- バックグラウンドで起動中のコンテナを停止
 - `$ docker stop 9029f63fff49`
 
 ---
@@ -148,17 +147,17 @@ CONTAINER ID        IMAGE               COMMAND                  CREATED        
 - EXPOSE
   - `EXPOSE <port> [<port>/<protocol>...]`
   - コンテナがリッスンするポートを指定。
-  - 実際に接続するためには、起動時に `-p <port>:<port>` のようなオプションが必要。
+  - ドキュメントの役割であり、実際に接続するためには、起動時に `-p <port>:<port>` のようなオプションが必要。
 
 ### my-test-containerをDockerfile化してみよう
   - さっきubuntuコンテナをベースに作ったmy-test-containerをbuildしてみましょう 💪💪💪
-  - サンプル: `/source/sample01`
+  - サンプル: `/source/docker/sample01`
 
 ### nginxコンテナをDockerfile化してみよう
   - `$ docker run -p 80:80 nginx` をDockerfileで表し、build、実行してみましょう！
   - イメージは `nginx:latest` を使ってください
   - nginxの開始コマンドは `$ nginx -g daemon off;`です
-  - サンプル: `/source/sample02`
+  - サンプル: `/source/docker/sample02`
 
 ### 公式チュートリアルのDockerfile
 - https://docs.docker.com/get-started/part2/
