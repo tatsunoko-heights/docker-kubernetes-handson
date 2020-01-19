@@ -1,5 +1,18 @@
 # ハンズオン
 
+このハンズオンは以下のバージョンでの動作を確認しています。
+```
+$ kubectl version
+Client Version: version.Info{Major:"1", Minor:"14", GitVersion:"v1.14.8", GitCommit:"211047e9a1922595eaa3a1127ed365e9299a6c23", GitTreeState:"clean", BuildDate:"2019-10-15T12:11:03Z", GoVersion:"go1.12.10", Compiler:"gc", Platform:"darwin/amd64"}
+Server Version: version.Info{Major:"1", Minor:"14", GitVersion:"v1.14.8", GitCommit:"211047e9a1922595eaa3a1127ed365e9299a6c23", GitTreeState:"clean", BuildDate:"2019-10-15T12:02:12Z", GoVersion:"go1.12.10", Compiler:"gc", Platform:"linux/amd64"}
+
+Mac OS High Sierra
+docker desktop version 2.1.0.5
+```
+
+また、他のバージョンによる組み合わせで不具合が出たので、同様の事象がある方は以下を参考にしてください
+https://gist.github.com/pypypyo14/812210ea1acfdeb718ed5d4ba7e223d2
+
 ## 準備
 
 ### kubectlがインストールできていることを確認する
@@ -63,18 +76,16 @@ Name:               docker-desktop
 Roles:              master
 Labels:             beta.kubernetes.io/arch=amd64
                     beta.kubernetes.io/os=linux
-                                        kubernetes.io/arch=amd64
-                                                            kubernetes.io/hostname=docker-desktop
-                                                                                kubernetes.io/os=linux
-                                                                                                    node-role.kubernetes.io/master=
-                                                                                                    Annotations:        kubeadm.alpha.kubernetes.io/cri-socket: /var/run/dockershim.sock
-                                                                                                                        node.alpha.kubernetes.io/ttl: 0
-                                                                                                                                            volumes.kubernetes.io/controller-managed-attach-detach: true
-                                                                                                                                            CreationTimestamp:  Sun, 08 Dec 2019 22:26:45 +0900
+                    kubernetes.io/arch=amd64
+                    kubernetes.io/hostname=docker-desktop
+                    kubernetes.io/os=linux
+                    node-role.kubernetes.io/master=
+Annotations:        kubeadm.alpha.kubernetes.io/cri-socket: /var/run/dockershim.sock
+                    node.alpha.kubernetes.io/ttl: 0
+                    volumes.kubernetes.io/controller-managed-attach-detach: true
+                    CreationTimestamp:  Sun, 08 Dec 2019 22:26:45 +0900
 (以下略)
 ```
-
-// T.B.D: describeの内容詳細説明する？長くなるから略しても良さそう。最初のうちはNodeのことは気にしなくて良いし。
 
 #### Kubernetes のコンポーネントを確認する
 
@@ -104,7 +115,7 @@ kube-system   kube-scheduler-docker-desktop            1/1     Running   2      
 #### Deploymentの作成
 
 ```
-# kkubectl apply -f <manifest file>
+# kubectl apply -f <manifest file>
 $ kubectl apply -f https://k8s.io/examples/application/deployment.yaml
 ```
 
@@ -163,31 +174,35 @@ $ kubectl logs <pod-name>
 $ kubectl port-forward <pod-name> 8080:80
 ```
 
-- `localhost:80`にアクセスする
+- `localhost:8080`にアクセスする
 - `Welcome to nginx!`と表示されて入れば成功！
 
 #### Podの削除
 
 ```
 # kubectl delete -f <file.yaml>
-$ k delete -f https://k8s.io/examples/application/deployment.yaml
+$ kubectl delete -f https://k8s.io/examples/application/deployment.yaml
 ```
 
 - `kubectl get pods`で消えていく様子が伺える
 
 ## アプリをデプロイし、画面におとうふくんの絵を表示させよう！
 
-ここからは自分で考えながら手を動かしてみましょう！
-わからなければ<T.B.D>に動作するyamlがあるので、まずはそれをそのまま利用しても良いです。
+ここからは考えながら手を動かしてみましょう！
 
-### おとうふくん表示アプリをデプロイする
+`Deploymentの作成`で利用した[yamlファイル](https://k8s.io/examples/application/deployment.yaml)を利用し、
+要件を満たすアプリがデプロイできるよう修正していきましょう。
+
+わからなければ`source/kubernetes/deployment.yaml`に動作するyamlがあるので、まずはそれをそのまま利用しても良いです。
+
+### アプリをデプロイする
 
 以下の要件を満たすアプリをデプロイしてみましょう！！
 
 - podの数は2
 - Deploymentを使用する
 - containerPortは3000
-- image名はaoi1/tofu-sample-app T.B.D タグ名をつける
+- image名はaoi1/tofu-sample-app:1.0
 - コンテナ名などは自由
 
 できたら以下が出来上がっているか確認しましょう!
@@ -205,15 +220,53 @@ $ kubectl get pods
 
 port-forwardを利用してアプリが起動していることを確認しましょう！
 
-起動して入れば画面におとうふくんの絵が表示されます
+起動して入れば画面にイラストが表示されます
 
+- deploymentに対してport-forwardする場合は`kubectl port-forward deployment/<deployment name> XXXX:XXXX`で実行可能です
 - targetPortは3000番
 
 ### (応用編) Serviceを利用してクラスタの外からアプリの動作を確認する
 
-<T.B.D>
+Serviceリソースを作成してクラスタの外からアプリにアクセスできるようにしましょう。
 
+`source/kubernetes/service.yaml`をそのまま利用してください。
 
-# 付録
+```
+apiVersion: v1
+kind: Service
+metadata:
+  name: tofu-sample-app
+spec:
+  type: NodePort
+  selector:
+    app: tofu-sample-app
+  ports:
+    - name: "http-port"
+      protocol: "TCP"
+      port: 80
+      targetPort: 3000
+```
+
+- `type:NodePort`でクラスタ外からアクセス可能
+- `kubectl apply -f <servicename>.yaml`でServiceを作成する
+
+以下のコマンドでServiceが作成できていることを確認しましょう
+
+```
+$ kubectl get service
+NAME              TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+kubernetes        ClusterIP   10.96.0.1       <none>        443/TCP        41d
+tofu-sample-app   NodePort    10.105.21.227   <none>        80:32697/TCP   3s
+```
+
+作成できていればブラウザでServiceのPortに記載されているポートにアクセスしましょう！
+
+```
+localhost:<port number(上記例だと32697)>
+```
+
+イラストが表示されていれば成功です！
+
+# 付録<T.B.D>
 - この後学習を進める方法
 - namespaceについてと、kubectlを利用した作成方法、利用方法

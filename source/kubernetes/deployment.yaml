@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tofu-sample-app
+  labels:
+    app: tofu-sample-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tofu-sample-app
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: tofu-sample-app
+    spec:
+      containers:
+      - image: aoi1/tofu-sample-app:1.0
+        name: tofu-sample-app
+        ports:
+        - containerPort: 3000
+          name: tofu-sample-app
