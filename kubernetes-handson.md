@@ -163,10 +163,13 @@ $ kubectl exec -it nginx-deployment-XXXX bash
 #### Podのlogを参照する
 
 ```
-$ kubectl logs <pod-name>
+# kubectl logs <pod-name>
+$ kubectl logs kube-apiserver-docker-desktop -n kube-system
 ```
 
-(T.B.D) nginxだとログが出ないので、コマンドがあってるかどうかわかりづらい
+- pod-nameはdocker-desktopではない場合、この名前ではないと思います
+  - `kubectl get pods -A`でapi-serverのPod名を調べてみましょう！
+- `-n` でnamespaceを指定しています
 
 #### 外からPodにアクセスする
 
@@ -180,11 +183,11 @@ $ kubectl port-forward <pod-name> 8080:80
 #### Podの削除
 
 ```
-# kubectl delete -f <file.yaml>
-$ kubectl delete -f https://k8s.io/examples/application/deployment.yaml
+# kubectl delete pod <podname>
 ```
 
 - `kubectl get pods`で消えていく様子が伺える
+- DeploymentでPodの数を指定しているので、Podを消してもPodは復活する！(Reconcile)
 
 ## アプリをデプロイし、画面におとうふくんの絵を表示させよう！
 
@@ -267,6 +270,31 @@ localhost:<port number(上記例だと32697)>
 
 イラストが表示されていれば成功です！
 
-# 付録<T.B.D>
-- この後学習を進める方法
-- namespaceについてと、kubectlを利用した作成方法、利用方法
+# クリーンナップ
+
+作ったものは消してしまいましょう！！
+
+残しておきたい場合はこの章を行う必要はありませんが、余計なPCリソースを食うので気をつけてくださいね。
+
+## ファイルを使用してリソースを消す方法
+
+以下のコマンドでリソース作成に使用したファイルを使用してリソースを消すことができます
+
+Podの削除で一度出てきていますね
+
+```
+$ kubectl delete -f <ファイル名>
+```
+
+## コマンドでリソースを指定して消す方法
+
+以下の方法でリソースを指定して消すこともできます
+
+```
+$ kubectl delete <リソース> <リソース名>
+# 例
+$ kubectl delete deployment deploymentname
+$ kubectl delete service servicename
+```
+
+- Podの削除のところにも書きましたが、Podだけ消してもDeploymentの指定によってPodは復活します！
