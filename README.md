@@ -52,3 +52,11 @@
 - kataconda
   - https://www.katacoda.com/courses/kubernetes/launch-single-node-cluster
 
+## 資料
+座学で使用する資料は以下です
+適宜参照してください
+
+- Docker
+  - https://speakerdeck.com/pypypyo14/tatufalsekohaitu-dockerhandson
+- Kubernetes
+  - https://speakerdeck.com/aoi1/kuberneteshandson
