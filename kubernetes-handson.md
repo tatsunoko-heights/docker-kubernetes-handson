@@ -90,7 +90,10 @@ Annotations:        kubeadm.alpha.kubernetes.io/cri-socket: /var/run/dockershim.
 #### Kubernetes のコンポーネントを確認する
 
 ```
-$ kubernetes get pod -A
+// kubernets 1.13まで
+$ kubectl get pods --all-namespaces
+// kubernetes 1.14以降
+$ kubectl get pod -A
 NAMESPACE     NAME                                     READY   STATUS    RESTARTS   AGE
 docker        compose-6c67d745f6-sxfmn                 1/1     Running   2          35d
 docker        compose-api-57ff65b8c7-krtb8             1/1     Running   2          35d
